@@ -43,19 +43,22 @@ function initializeUserSubscriptionsObj() {
 	}
 }
 
-if(!Object.keys(userSubscriptions).length)
+if (!Object.keys(userSubscriptions).length)
 	initializeUserSubscriptionsObj();
-	
-app.post('/register', (req, res) => {
-	subscriptionInfo = req.body.subscription;
-	let rasporedSelection = req.body.razred;
-	if (Object.keys(userSubscriptions).includes(rasporedSelection)) {
-		userSubscriptions[rasporedSelection].push(subscriptionInfo);
-		res.sendStatus(201);
-	} else {
-		res.sendStatus(422);
-	}
 
+app.post('/register', (req, res) => {
+	try {
+		subscriptionInfo = req.body.subscription;
+		let rasporedSelection = req.body.razred;
+		if (Object.keys(userSubscriptions).includes(rasporedSelection)) {
+			userSubscriptions[rasporedSelection].push(subscriptionInfo);
+			res.sendStatus(201);
+		} else {
+			res.sendStatus(422);
+		}
+	} catch (error) {
+		console.warn(error);
+	}
 });
 
 app.listen(3000, () => {
@@ -79,7 +82,7 @@ webPush.setVapidDetails(
 
 let raspHashes = {};
 
-async function updateHashes({silentUpdate}) {
+async function updateHashes({ silentUpdate }) {
 	const response = await fetch("https://raspored.strukovnasamobor.com/rasporediRazreda.json");
 	const data = await response.json();
 
@@ -89,28 +92,38 @@ async function updateHashes({silentUpdate}) {
 	console.log(clc.bgRedBright('(UPDATED)'), clc.bgGreenBright('(UNCHANGED)'), "\n");
 
 	for (razred in data) {
-		const rasporedUrl = data[razred]["RASPORED"];
+		try {
+			const rasporedUrl = data[razred]["RASPORED"];
 
-		const rasporedRawResponse = await fetch(rasporedUrl);
-		const html = await rasporedRawResponse.text();
+			const rasporedRawResponse = await fetch(rasporedUrl);
+			const html = await rasporedRawResponse.text();
 
-		let toHash = html.substring(html.indexOf(`<body class="docs-gm">`) + 1, html.lastIndexOf("<script"));
+			let toHash = html.substring(html.indexOf(`<body class="docs-gm">`) + 1, html.lastIndexOf("<script"));
 
-		const regex = /(href="\S*"|id="\S*")/gm;
-    // zakomentirati za testiranje
-		toHash = toHash.replace(regex, "*");
-		let hash = createHash("md5").update(toHash).digest("hex");
-		if (hash === raspHashesFile[razred]) { // UNCHANGED
-			console.log(clc.bgGreenBright(`${razred} - ${hash}`));
-		} else {
-			console.log(clc.bgRedBright(`${razred} - ${hash}`));
-      if(silentUpdate === false){
-			console.log(clc.italic(` > Notifying: ${userSubscriptions[razred].length} users`));
-			userSubscriptions[razred].forEach((userSub) => {
-    			webPush.sendNotification(userSub, "Promjena Rasporeda!");
-			});
-		}}
-		raspHashes[razred] = hash;
+			const regex = /(href="\S*"|id="\S*")/gm;
+			// zakomentirati za testiranje
+			toHash = toHash.replace(regex, "*");
+			let hash = createHash("md5").update(toHash).digest("hex");
+			if (hash === raspHashesFile[razred]) { // UNCHANGED
+				console.log(clc.bgGreenBright(`${razred} - ${hash}`));
+			} else {
+				console.log(clc.bgRedBright(`${razred} - ${hash}`));
+				if (silentUpdate === false) {
+					console.log(clc.italic(` > Notifying: ${userSubscriptions[razred].length} users`));
+					userSubscriptions[razred].forEach((userSub) => {
+						try {
+							webPush.sendNotification(userSub, "Promjena Rasporeda!");
+						} catch (error) {
+							console.warn(error);
+						}
+					});
+				}
+			}
+			raspHashes[razred] = hash;
+
+		} catch (error) {
+			console.warn(error);
+		}
 
 	}
 	console.log("\n", clc.bgYellowBright("[REFRESH FINISH] result:"));
@@ -122,17 +135,29 @@ async function updateHashes({silentUpdate}) {
 }
 
 app.get('/raspored_update', (req, res) => {
-	updateHashes({silentUpdate: true});
-  res.statusCode(200);
+	try {
+		updateHashes({ silentUpdate: true });
+	} catch (error) {
+		console.warn(error);
+	}
+	res.statusCode(200);
 });
 
 // formula za vrijeme: https://crontab.guru/examples.html
-// svakih sat vremena '0 * * * *''
-// svaka minuta '* * * * *''
+// [ svakih sat vremena = '0 * * * *' ] [ svaka minuta '* * * * *' ]
+
 schedule('* * * * *', () => {
-	updateHashes({silentUpdate: false});
+	try {
+		updateHashes({ silentUpdate: true });
+	} catch (error) {
+		console.warn(error);
+	}
 });
 
 schedule('* * * * *', () => {
-	saveUserSubscriptionsToFile();
+	try {
+		saveUserSubscriptionsToFile();
+	} catch (error) {
+		console.warn(error);
+	}
 });
