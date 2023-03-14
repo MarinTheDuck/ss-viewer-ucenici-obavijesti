@@ -1,0 +1,20 @@
+{
+  "name": "SS Viewer - Učenici (obavijesti)",
+  "version": "1.0.0",
+  "description": "Server za slanje notifikacija korisnicima SS Viewera nakon promjene u rasporedu.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js --experimental-repl-await --experimental-modules"
+  },
+  "keywords": [],
+  "author": "Marin Zorić, 4.G (22./23.)",
+  "license": "GNU AGPLv3",
+  "dependencies": {
+    "@types/node": "^18.0.6",
+    "cli-color": "^2.0.3",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.2",
+    "node-fetch": "^3.2.6",
+    "web-push": "^3.5.0"
+  }
+}
