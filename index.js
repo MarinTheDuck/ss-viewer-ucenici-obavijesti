@@ -50,8 +50,25 @@ app.post('/register', (req, res) => {
 	try {
 		subscriptionInfo = req.body.subscription;
 		let rasporedSelection = req.body.razred;
-		if (Object.keys(userSubscriptions).includes(rasporedSelection)) {
+		if (Object.keys(userSubscriptions).includes(rasporedSelection) && !userSubscriptions[rasporedSelection].includes(subscriptionInfo)) {
 			userSubscriptions[rasporedSelection].push(subscriptionInfo);
+			res.sendStatus(201);
+		} else {
+			res.sendStatus(422);
+		}
+	} catch (error) {
+		console.warn(error);
+	}
+});
+
+app.post('/unregister', (req, res) => {
+	try {
+		subscriptionInfo = req.body.subscription;
+		let rasporedSelection = req.body.razred;
+		if (Object.keys(userSubscriptions).includes(rasporedSelection)) {
+			userSubscriptions[rasporedSelection] = userSubscriptions[rasporedSelection].filter((userSub) => {
+				return userSub.endpoint !== subscriptionInfo.endpoint;
+			});
 			res.sendStatus(201);
 		} else {
 			res.sendStatus(422);
