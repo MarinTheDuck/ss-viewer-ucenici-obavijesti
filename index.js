@@ -151,9 +151,22 @@ async function updateHashes({ silentUpdate }) {
 	});
 }
 
-app.get('/raspored_update', (req, res) => {
+// updateHashes({ silentUpdate: true });
+// ne šalje notifikacije, samo ažurira raspHashes.json
+app.get('/update_hashes', (req, res) => {
 	try {
 		updateHashes({ silentUpdate: true });
+	} catch (error) {
+		console.warn(error);
+	}
+	res.statusCode(200);
+});
+
+// updateHashes({ silentUpdate: false });
+// šalje notifikacije i ažurira raspHashes.json
+app.get('/update_subscriptions', (req, res) => {
+	try {
+		updateHashes({ silentUpdate: false });
 	} catch (error) {
 		console.warn(error);
 	}
