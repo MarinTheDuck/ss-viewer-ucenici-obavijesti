@@ -2,6 +2,7 @@
 - promjena pretplate na drugi razred
     - ovo bi implementirali preko client-a? (client prvo šalje */unregister* na trenutni subscription, pa onda */register* na novi)
 - pretplatio pa izgubio pretplatu
+
 ## DONE:
 > 8.5.2023.
 + zabrana višetruke pretplate
